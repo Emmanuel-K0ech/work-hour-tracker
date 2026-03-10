@@ -1,0 +1,21 @@
+body {
+font-family: Arial;
+max-width: 800px;
+margin: auto;
+}
+
+button {
+padding: 10px;
+margin: 5px;
+}
+
+table {
+width: 100%;
+border-collapse: collapse;
+margin-top: 20px;
+}
+
+td, th {
+border: 1px solid #ddd;
+padding: 8px;
+}
