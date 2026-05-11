@@ -2,26 +2,74 @@ const API = "http://127.0.0.1:8000"
 
 let clockInTime = null
 
+async function loadRoles() {
+    const res = await fetch(API + "/roles")
+    const roles = await res.json()
+
+    const roleSelect = document.getElementById("roleSelect")
+    roles.forEach(role => {
+        const option = document.createElement("option")
+        option.value = role.id
+        option.text = `${role.name} ($${role.hourly_rate}/hr)`
+        roleSelect.appendChild(option)
+    })
+}
+
 async function clockIn() {
-    await fetch(API + "/clock-in", {method: "POST"})
-    checkActiveShift()
+    const roleId = document.getElementById("roleSelect").value
+    const location = document.getElementById("locationInput").value
+
+    if (!roleId) {
+        alert("Please select a role")
+        return
+    }
+
+    if (!location) {
+        alert("Please enter a location")
+        return
+    }
+
+    try {
+        const res = await fetch(API + "/clock-in", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({role_id: parseInt(roleId), location: location})
+        })
+        const data = await res.json()
+        if (res.ok) {
+            checkActiveShift()
+        } else {
+            alert(data.detail || "Error clocking in")
+        }
+    } catch (e) {
+        alert("Error: " + e.message)
+    }
 }
 
 async function clockOut() {
 
-    await fetch(API + "/clock-out", {method: "POST"})
+    try {
+        const res = await fetch(API + "/clock-out", {method: "POST"})
+        const data = await res.json()
+        if (res.ok) {
+            clockInTime = null
 
-    clockInTime = null
+            if (timerInterval) {
+                clearInterval(timerInterval)
+                timerInterval = null
+            }
 
-    if (timerInterval) {
-        clearInterval(timerInterval)
-        timerInterval = null
+            checkActiveShift()
+            loadShifts()
+            loadTodayHours()
+            loadWeeklyChart()
+            loadPayBreakdown()
+        } else {
+            alert(data.detail || "Error clocking out")
+        }
+    } catch (e) {
+        alert("Error: " + e.message)
     }
-
-    checkActiveShift()
-    loadShifts()
-    loadTodayHours()
-    loadWeeklyChart()
 }
 
 async function checkActiveShift() {
@@ -81,6 +129,7 @@ async function loadShifts() {
     const data = await res.json()
 
     document.getElementById("total").innerText = data.total_hours
+    document.getElementById("totalPay").innerText = "$" + data.total_pay
 
     const table = document.getElementById("shiftTable")
     table.innerHTML = ""
@@ -92,7 +141,10 @@ async function loadShifts() {
         <td>${new Date(s.clock_in).toLocaleDateString()}</td>
         <td>${new Date(s.clock_in).toLocaleTimeString()}</td>
         <td>${s.clock_out ? new Date(s.clock_out).toLocaleTimeString() : "-"}</td>
-        <td>${s.hours_worked || "-"}</td>
+        <td>${s.location || "-"}</td>
+        <td>${s.role || "-"}</td>
+        <td>${s.hours_worked !== null ? s.hours_worked : "-"}</td>
+        <td>${s.pay !== null ? "$" + s.pay : "-"}</td>
         </tr>
         `
 
@@ -108,6 +160,8 @@ async function loadTodayHours() {
     document.getElementById("todayHours").innerText = data.today_hours
 }
 
+let weeklyChart = null
+
 async function loadWeeklyChart() {
 
     const res = await fetch(API + "/weekly-hours")
@@ -118,7 +172,12 @@ async function loadWeeklyChart() {
 
     const ctx = document.getElementById("weeklyChart")
 
-    new Chart(ctx, {
+    // Destroy existing chart if it exists
+    if (weeklyChart) {
+        weeklyChart.destroy()
+    }
+
+    weeklyChart = new Chart(ctx, {
         type: "bar",
         data: {
             labels: labels,
@@ -130,7 +189,58 @@ async function loadWeeklyChart() {
     })
 }
 
+async function loadPayBreakdown() {
+    const start = document.getElementById("start").value
+    const end = document.getElementById("end").value
+
+    let url = API + "/pay-breakdown"
+
+    if (start && end)
+        url += `?start=${start}&end=${end}`
+
+    const res = await fetch(url)
+    const data = await res.json()
+
+    const container = document.getElementById("payBreakdown")
+    container.innerHTML = ""
+
+    if (data.breakdown.length === 0) {
+        container.innerHTML = "<p>No shifts recorded</p>"
+        return
+    }
+
+    let html = `<table style="border-collapse: collapse; width: 100%;">
+        <thead>
+            <tr style="border: 1px solid #ddd;">
+                <th style="border: 1px solid #ddd; padding: 8px;">Role</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">Hours</th>
+                <th style="border: 1px solid #ddd; padding: 8px;">Pay</th>
+            </tr>
+        </thead>
+        <tbody>`
+
+    data.breakdown.forEach(item => {
+        html += `<tr style="border: 1px solid #ddd;">
+            <td style="border: 1px solid #ddd; padding: 8px;">${item.role}</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">${item.hours}</td>
+            <td style="border: 1px solid #ddd; padding: 8px;">$${item.pay}</td>
+        </tr>`
+    })
+
+    html += `<tr style="border: 1px solid #ddd; font-weight: bold;">
+        <td style="border: 1px solid #ddd; padding: 8px;">Total</td>
+        <td style="border: 1px solid #ddd; padding: 8px;"></td>
+        <td style="border: 1px solid #ddd; padding: 8px;">$${data.total_pay}</td>
+    </tr>
+    </tbody>
+    </table>`
+
+    container.innerHTML = html
+}
+
 checkActiveShift()
+loadRoles()
 loadShifts()
 loadTodayHours()
 loadWeeklyChart()
+loadPayBreakdown()

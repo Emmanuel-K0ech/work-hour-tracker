@@ -1,48 +1,65 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Work Hour Tracker</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
+  </head>
 
-<body>
+  <body>
+    <h1>Work Hour Tracker</h1>
 
-<h1>Work Hour Tracker</h1>
+    <div class="controls">
+      <div>
+        <label for="roleSelect">Role:</label>
+        <select id="roleSelect">
+          <option value="">Select a role...</option>
+        </select>
+      </div>
+      <div>
+        <label for="locationInput">Location:</label>
+        <input type="text" id="locationInput" placeholder="Enter location" />
+      </div>
+      <button onclick="clockIn()">Clock In</button>
+      <button onclick="clockOut()">Clock Out</button>
+    </div>
 
-<div class="controls">
-    <button onclick="clockIn()">Clock In</button>
-    <button onclick="clockOut()">Clock Out</button>
-</div>
+    <h2 id="timer">Not working</h2>
+    <h3>Today: <span id="todayHours">0</span> hours</h3>
 
-<h2 id="timer">Not working</h2>
-<h3>Today: <span id="todayHours">0</span> hours</h3>
+    <h3>Filter</h3>
 
-<h3>Filter</h3>
+    <input type="date" id="start" />
+    <input type="date" id="end" />
+    <button onclick="loadShifts()">Show</button>
 
-<input type="date" id="start">
-<input type="date" id="end">
-<button onclick="loadShifts()">Show</button>
+    <h3>
+      Total Hours: <span id="total">0</span> hours | Total Pay:
+      <span id="totalPay">$0</span>
+    </h3>
 
-<h3>Total Hours: <span id="total">0</span></h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Clock In</th>
+          <th>Clock Out</th>
+          <th>Location</th>
+          <th>Role</th>
+          <th>Hours</th>
+          <th>Pay</th>
+        </tr>
+      </thead>
 
-<table>
-<thead>
-<tr>
-<th>Date</th>
-<th>Clock In</th>
-<th>Clock Out</th>
-<th>Hours</th>
-</tr>
-</thead>
+      <tbody id="shiftTable"></tbody>
+    </table>
+    <h2>Weekly Work Hours</h2>
 
-<tbody id="shiftTable"></tbody>
+    <canvas id="weeklyChart"></canvas>
 
-</table>
-<h2>Weekly Work Hours</h2>
+    <h2>Pay Breakdown by Role</h2>
+    <div id="payBreakdown"></div>
 
-<canvas id="weeklyChart"></canvas>
-<script src="script.js"></script>
-
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
