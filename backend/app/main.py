@@ -1,9 +1,9 @@
 from database import get_db_connection
 from fastapi import FastAPI
-from models import create_entry
+from models import create_tables
 from schemas import EntryCreate
 
-create_entry()
+create_tables()
 
 app = FastAPI()
 
@@ -18,9 +18,11 @@ def create_entry(entry: EntryCreate):
 
     # checking database for duplicate entries
     cursor.execute(
-        "SELECT * FROM work_entries
-        WHERE date=entry.date
-        "
+        """
+        SELECT * FROM work_entries
+        WHERE date= ?
+        """,
+        (entry.date,)
     )
 
     rows = cursor.fetchall()
