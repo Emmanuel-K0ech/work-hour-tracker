@@ -1,5 +1,7 @@
+from database import get_db_connection
 from fastapi import FastAPI
 from models import create_entry
+from schemas import EntryCreate
 
 create_entry()
 
@@ -8,8 +10,49 @@ app = FastAPI()
 # Endpoint to create a new entry and save it to the database
 #  if entry does not already exist
 @app.post("/entries")
-def create_entry():
-    pass
+def create_entry(entry: EntryCreate):
+
+    # creating database connection
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # checking database for duplicate entries
+    cursor.execute(
+        "SELECT * FROM work_entries
+        WHERE date=entry.date
+        "
+    )
+
+    rows = cursor.fetchall()
+
+    # return error if duplicte exists
+    if rows:
+        return {
+            "error": "An entry already exists for this date"
+        }
+    else:
+        cursor.execute("""
+        INSERT INTO work_entries
+        (date, hours_worked, hourly_rate)
+        VALUES (?, ?, ?)
+        """,
+        (
+            entry.date,
+            entry.hours_worked,
+            entry.hourly_rate
+        ))
+
+    conn.commit()
+
+    conn.close()
+
+    return {
+        "message": "Entry saved successfully",
+        "date": entry.date,
+        "hours_worked": entry.hours_worked,
+        "hourly_rate": entry.hourly_rate
+    }
+
 
 # retrieve all entries from the database and return them as a list
 @app.get("/entries")
