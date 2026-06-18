@@ -59,14 +59,57 @@ def create_entry(entry: EntryCreate):
 # retrieve all entries from the database and return them as a list
 @app.get("/entries")
 def get_entries():
-    pass
+    # create database connection
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-# retrieve a specific entry by its ID and return it
+    # select all entries from the database
+    cursor.execute("""
+    SELECT * FROM work_entries
+    """)
+
+    # fetch all rows and return them as a list of dictionaries
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    entries = []
+
+    for row in rows:
+        entries.append({
+            "id": row[0],
+            "date": row[1],
+            "hours_worked": row[2],
+            "hourly_rate": row[3]
+        })
+
+    return entries
+
+
+# retrieve a specific entry by its date and return it
 @app.get("/entries/{date}")
-def get_entry(entry_id: int):
-    pass
+def get_entry(date: str):
+    # create database connection
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-# get summary of of all entries from a specidied date range
+    # select entry by date
+    cursor.execute("""
+    SELECT * FROM work_entries
+    WHERE date = ?
+    """, (date,))
+
+    # fetch the row and return it as a dictionary
+    row = cursor.fetchone()
+
+    conn.close()
+
+    if row:
+        return row
+    else:
+        return {"error": "Entry not found"}
+
+# get summary of of all entries from a specified date range
 @app.get("/summary")
 def get_summary(start_date: str, end_date: str):
     pass
