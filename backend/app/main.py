@@ -1,7 +1,7 @@
 from database import get_db_connection
 from fastapi import FastAPI
 from models import create_tables
-from schemas import EntryCreate
+from schemas import EntryCreate, EntryUpdate
 
 create_tables()
 
@@ -112,9 +112,67 @@ def get_entry(date: str):
 # get summary of of all entries from a specified date range
 @app.get("/summary")
 def get_summary(start_date: str, end_date: str):
-    pass
+    # create database connection
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # select entries within the date range
+    cursor.execute("""
+    SELECT * FROM work_entries
+    WHERE date BETWEEN ? AND ?
+    """, (start_date, end_date))
+
+    # fetch all rows and return them as a list of dictionaries
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    total_hours = 0
+    total_earnings = 0
+
+    # calculate total hours and earnings from the entries row by row
+    for row in rows:
+        total_hours += row[2]
+        total_earnings += row[2] * row[3]
+
+    return {
+        "start_date": start_date,
+        "end_date": end_date,
+        "total_hours": total_hours,
+        "total_earnings": total_earnings
+    }
 
 # update an existing entry by its date with new data
 @app.put("/entries/{date}")
-def update_entry(date: str):
-    pass
+def update_entry(date: str, entry: EntryUpdate):
+    # create databse connection
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # check if entry exists
+    cursor.execute("""
+    SELECT * FROM work_entries
+    WHERE date = ?
+    """, (date,))
+
+    row = cursor.fetchone()
+
+    if row:
+        # update the entry with new data
+        cursor.execute("""
+        UPDATE work_entries
+        SET hours_worked = ?, hourly_rate = ?
+        WHERE date = ?
+        """, (entry.hours_worked, entry.hourly_rate, date))
+    else:
+        return {"error": "Entry not found"}
+
+    conn.commit()
+    conn.close()
+
+    return {
+            "message": "Entry updated successfully",
+            "date": date,
+            "hours_worked": entry.hours_worked,
+            "hourly_rate": entry.hourly_rate
+            }
