@@ -139,7 +139,7 @@ def get_summary(start_date: str, end_date: str):
         "start_date": start_date,
         "end_date": end_date,
         "total_hours": total_hours,
-        "total_earnings": total_earnings
+        "total_earnings": round(total_earnings, 2)
     }
 
 # update an existing entry by its date with new data
