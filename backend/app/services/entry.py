@@ -1,19 +1,12 @@
-from database import get_db_connection
-from fastapi import FastAPI
-from models import create_tables
-from schemas import EntryCreate, EntryUpdate, AgentRequest
-from config import OPENAI_API_KEY
-from ai import ask_gpt, run_agent
+"""
+Service functions for managing work entries.
+"""
 
-create_tables()
+# Saves a work entry to the database
+from backend.app.database import get_db_connection
 
-app = FastAPI()
 
-# Endpoint to create a new entry and save it to the database
-#  if entry does not already exist
-@app.post("/entries")
-def create_entry(entry: EntryCreate):
-
+def save_entry(date, hours_worked, hourly_rate):
     # creating database connection
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -24,7 +17,7 @@ def create_entry(entry: EntryCreate):
         SELECT * FROM work_entries
         WHERE date= ?
         """,
-        (entry.date,)
+        (date,)
     )
 
     rows = cursor.fetchall()
@@ -41,9 +34,9 @@ def create_entry(entry: EntryCreate):
         VALUES (?, ?, ?)
         """,
         (
-            entry.date,
-            entry.hours_worked,
-            entry.hourly_rate
+            date,
+            hours_worked,
+            hourly_rate
         ))
 
     conn.commit()
@@ -52,14 +45,12 @@ def create_entry(entry: EntryCreate):
 
     return {
         "message": "Entry saved successfully",
-        "date": entry.date,
-        "hours_worked": entry.hours_worked,
-        "hourly_rate": entry.hourly_rate
+        "date": date,
+        "hours_worked": hours_worked,
+        "hourly_rate": hourly_rate
     }
 
-
 # retrieve all entries from the database and return them as a list
-@app.get("/entries")
 def get_entries():
     # create database connection
     conn = get_db_connection()
@@ -87,9 +78,7 @@ def get_entries():
 
     return entries
 
-
-# retrieve a specific entry by its date and return it
-@app.get("/entries/{date}")
+# retrieve a single entry by its date
 def get_entry(date: str):
     # create database connection
     conn = get_db_connection()
@@ -111,8 +100,7 @@ def get_entry(date: str):
     else:
         return {"error": "Entry not found"}
 
-# get summary of of all entries from a specified date range
-@app.get("/summary")
+# get summary of a specific from a specific date range
 def get_summary(start_date: str, end_date: str):
     # create database connection
     conn = get_db_connection()
@@ -144,9 +132,8 @@ def get_summary(start_date: str, end_date: str):
         "total_earnings": round(total_earnings, 2)
     }
 
-# update an existing entry by its date with new data
-@app.put("/entries/{date}")
-def update_entry(date: str, entry: EntryUpdate):
+# update an existing entry by its date
+def update_entry(date: str, hours_worked: float, hourly_rate: float):
     # create databse connection
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -165,7 +152,7 @@ def update_entry(date: str, entry: EntryUpdate):
         UPDATE work_entries
         SET hours_worked = ?, hourly_rate = ?
         WHERE date = ?
-        """, (entry.hours_worked, entry.hourly_rate, date))
+        """, (hours_worked, hourly_rate, date))
     else:
         return {"error": "Entry not found"}
 
@@ -175,13 +162,6 @@ def update_entry(date: str, entry: EntryUpdate):
     return {
             "message": "Entry updated successfully",
             "date": date,
-            "hours_worked": entry.hours_worked,
-            "hourly_rate": entry.hourly_rate
+            "hours_worked": hours_worked,
+            "hourly_rate": hourly_rate
             }
-
-# creating an agent endpoint
-@app.post("/agent")
-def agent_endpoint():
-    result = run_agent(request.message)
-    return result
-
