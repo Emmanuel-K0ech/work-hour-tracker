@@ -1,9 +1,6 @@
-"""
-Service functions for managing work entries.
-"""
+""" Service functions for managing work entries. """
 
-# Saves a work entry to the database
-from backend.app.database import get_db_connection
+from database import get_db_connection
 
 
 def save_entry(date, hours_worked, hourly_rate):
