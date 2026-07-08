@@ -47,7 +47,7 @@ def update_entry_endpoint(date: str, entry: EntryUpdate):
 
 # creating an agent endpoint
 @app.post("/agent")
-def agent_endpoint():
+def agent_endpoint(request: AgentRequest):
     result = run_agent(request.message)
     return result
 

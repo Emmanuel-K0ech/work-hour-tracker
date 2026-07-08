@@ -1,6 +1,6 @@
 """ Service functions for managing work entries. """
 
-from database import get_db_connection
+from app.database import get_db_connection
 
 
 def save_entry(date, hours_worked, hourly_rate):

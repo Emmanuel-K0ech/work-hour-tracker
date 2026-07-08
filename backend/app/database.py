@@ -1,6 +1,14 @@
 import sqlite3
+from pathlib import Path
 
-DATABASE_NAME = 'timetracker.db'
+
+BASE_DIR = Path(__file__).resolve().parent
+
+DATABASE = BASE_DIR / "timetracker.db"
+
 
 def get_db_connection():
-    return sqlite3.connect(DATABASE_NAME)
+
+    connection = sqlite3.connect(DATABASE)
+
+    return connection
