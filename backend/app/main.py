@@ -1,10 +1,10 @@
-from database import get_db_connection
-from services.entry import get_entries, save_entry, update_entry, get_summary, get_entry
+from app.database import get_db_connection
+from app.services.entry import get_entries, save_entry, update_entry, get_summary, get_entry
 from fastapi import FastAPI
-from models import create_tables
-from schemas import EntryCreate, EntryUpdate, AgentRequest
-from config import OPENAI_API_KEY
-from ai import run_agent
+from app.models import create_tables
+from app.schemas import EntryCreate, EntryUpdate, AgentRequest
+from app.config import OPENAI_API_KEY
+from app.ai import process_message
 
 create_tables()
 
@@ -48,6 +48,6 @@ def update_entry_endpoint(date: str, entry: EntryUpdate):
 # creating an agent endpoint
 @app.post("/agent")
 def agent_endpoint(request: AgentRequest):
-    result = run_agent(request.message)
-    return result
+    response = process_message(request.message)
+    return { "response": response }
 

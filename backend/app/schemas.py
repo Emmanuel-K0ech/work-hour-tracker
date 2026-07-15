@@ -10,3 +10,7 @@ class EntryCreate(BaseModel):
 class EntryUpdate(BaseModel):
     hours_worked: float
     hourly_rate: float
+
+# Structure of agent request data
+class AgentRequest(BaseModel):
+    message: str
