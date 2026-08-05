@@ -1,6 +1,7 @@
 from app.database import get_db_connection
 from app.services.entry import get_entries, save_entry, update_entry, get_summary, get_entry
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.models import create_tables
 from app.schemas import EntryCreate, EntryUpdate, AgentRequest
 from app.config import OPENAI_API_KEY
@@ -9,6 +10,13 @@ from app.ai import process_message
 create_tables()
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 # Endpoint to create a new entry and save it to the database
 #  if entry does not already exist

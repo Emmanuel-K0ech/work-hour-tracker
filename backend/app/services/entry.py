@@ -72,14 +72,13 @@ def get_entries():
     entries = []
 
     for row in rows:
-        entries.append({
-            "id": row[0],
-            "date": row[1],
-            "hours_worked": row[2],
-            "hourly_rate": row[3]
-        })
+        entries.append(dict(row))
 
-    return entries
+    return {
+        "success": True,
+        "message": "Entries retrieved successfully",
+        "data": entries
+    }
 
 # retrieve a single entry by its date
 def get_entry(date: str):
@@ -99,7 +98,11 @@ def get_entry(date: str):
     conn.close()
 
     if row:
-        return dict(row)
+        return {
+            "success": True,
+            "message": "Entry retrieved successfully",
+            "data": dict(row)
+        }
     else:
         return {"success": False, "message": "Entry not found"}
 
@@ -129,10 +132,14 @@ def get_summary(start_date: str, end_date: str):
         total_earnings += row[2] * row[3]
 
     return {
-        "start_date": start_date,
-        "end_date": end_date,
-        "total_hours": total_hours,
-        "total_earnings": round(total_earnings, 2)
+        "success": True,
+        "message": "Summary generated successfully",
+        "data": {
+            "start_date": start_date,
+            "end_date": end_date,
+            "total_hours": total_hours,
+            "total_earnings": total_earnings
+            }
     }
 
 # update an existing entry by its date
