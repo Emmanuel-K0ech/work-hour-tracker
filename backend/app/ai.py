@@ -119,9 +119,13 @@ def process_message(user_message: str):
     response = ask_llm(user_message)
 
     tool_call = extract_tool_call(response)
+    print("Tool call:",tool_call)
 
     if not tool_call:
-        return "I could not determine an action."
+        return {
+            "success": False,
+            "message": "I could not determine an action."
+        }
 
     tool_name = tool_call["name"]
 

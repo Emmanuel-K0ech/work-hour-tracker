@@ -1,5 +1,7 @@
 """ Service functions for managing work entries. """
 
+from datetime import date
+
 from app.database import get_db_connection
 
 
@@ -22,8 +24,9 @@ def save_entry(date, hours_worked, hourly_rate):
     # return error if duplicte exists
     if rows:
         return {
-            "error": "An entry already exists for this date"
-        }
+            "success": False,
+            "message": "An entry already exists for this date"
+            }
     else:
         cursor.execute("""
         INSERT INTO work_entries
@@ -41,10 +44,13 @@ def save_entry(date, hours_worked, hourly_rate):
     conn.close()
 
     return {
-        "message": "Entry saved successfully",
+    "success": True,
+    "message": "Entry saved successfully",
+    "data": {
         "date": date,
         "hours_worked": hours_worked,
         "hourly_rate": hourly_rate
+        }
     }
 
 # retrieve all entries from the database and return them as a list
@@ -93,9 +99,9 @@ def get_entry(date: str):
     conn.close()
 
     if row:
-        return row
+        return dict(row)
     else:
-        return {"error": "Entry not found"}
+        return {"success": False, "message": "Entry not found"}
 
 # get summary of a specific from a specific date range
 def get_summary(start_date: str, end_date: str):
@@ -151,14 +157,17 @@ def update_entry(date: str, hours_worked: float, hourly_rate: float):
         WHERE date = ?
         """, (hours_worked, hourly_rate, date))
     else:
-        return {"error": "Entry not found"}
+        return {"success": False, "message": "Entry not found"}
 
     conn.commit()
     conn.close()
 
     return {
-            "message": "Entry updated successfully",
+        "success": True,
+        "message": "Entry updated successfully",
+        "data": {
             "date": date,
             "hours_worked": hours_worked,
             "hourly_rate": hourly_rate
-            }
+        }
+    }
