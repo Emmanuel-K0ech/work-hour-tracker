@@ -72,23 +72,19 @@ def execute_tool(tool_name, arguments):
             arguments["hourly_rate"]
         )
     elif tool_name == "get_entries":
-        # Implement logic to retrieve entries
         return get_entries()
     elif tool_name == "get_summary":
-        # Implement logic to retrieve summary
         return get_summary(
             arguments["start_date"],
             arguments["end_date"]
         )
     elif tool_name == "update_entry":
-        # Implement logic to update an entry
         return update_entry(
             arguments["date"],
             arguments["hours_worked"],
             arguments["hourly_rate"]
         )
     elif tool_name == "get_entry":
-        # Implement logic to retrieve a specific entry
         return get_entry(arguments["date"])
     else:
         raise ValueError(f"Unknown tool: {tool_name}")
