@@ -17,53 +17,50 @@ export default function AddEntryScreen() {
   const [hoursWorked, setHoursWorked] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
 
- const handleSave = async () => {
-  const hours = Number(hoursWorked);
-  const rate = Number(hourlyRate);
+  const handleSave = async () => {
+    const hours = Number(hoursWorked);
+    const rate = Number(hourlyRate);
 
-  if (!hoursWorked || !hourlyRate) {
-    alert("Please enter hours worked and hourly rate.");
-    return;
-  }
+    if (!hoursWorked || !hourlyRate) {
+      alert("Please enter hours worked and hourly rate.");
+      return;
+    }
 
-  if (hours <= 0) {
-    alert("Hours worked must be greater than 0.");
-    return;
-  }
+    if (hours <= 0) {
+      alert("Hours worked must be greater than 0.");
+      return;
+    }
 
-  if (rate <= 0) {
-    alert("Hourly rate must be greater than 0.");
-    return;
-  }
+    if (rate <= 0) {
+      alert("Hourly rate must be greater than 0.");
+      return;
+    }
 
-  console.log({
-    date: formatDateForInput(date),
-    hours_worked: hours,
-    hourly_rate: rate,
-  });
-
-  try {
-    await saveEntry({
+    console.log({
       date: formatDateForInput(date),
       hours_worked: hours,
       hourly_rate: rate,
     });
 
-    alert("Entry saved successfully!");
-  } catch (error) {
-    console.error("Save entry error:", error);
-    alert("Failed to save entry.");
-  }
-};
+    try {
+      await saveEntry({
+        date: formatDateForInput(date),
+        hours_worked: hours,
+        hourly_rate: rate,
+      });
+
+      alert("Entry saved successfully!");
+    } catch (error) {
+      console.error("Save entry error:", error);
+      alert("Failed to save entry.");
+    }
+  };
 
   const formatDateForInput = (value: Date) => {
     return value.toISOString().split("T")[0];
   };
 
-  const handleDateChange = (
-    event: any,
-    selectedDate?: Date
-  ) => {
+  const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
 
     if (selectedDate) {
@@ -131,9 +128,7 @@ export default function AddEntryScreen() {
 
       {/* Save */}
       <Pressable style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>
-          Save Entry
-          </Text>
+        <Text style={styles.saveButtonText}>Save Entry</Text>
       </Pressable>
     </View>
   );
