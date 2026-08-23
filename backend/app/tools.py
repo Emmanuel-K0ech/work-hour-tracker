@@ -2,7 +2,7 @@ tools = [
     {
         "type": "function",
         "name": "save_entry",
-        "description": "Save a work entry containing the date, hours worked, and hourly rate.",
+        "description": "Save a work entry. The date must be the actual date the work was performed, in YYYY-MM-DD format. If the user says 'today', use today's actual date provided in the agent instructions.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -77,7 +77,7 @@ tools = [
     {
         "type": "function",
         "name": "get_summary",
-        "description": "Retrieve a summary of work entries within a specified date range.",
+        "description": "Retrieve a summary of work entries within a specified date range. Use YYYY-MM-DD dates. For 'this month', use the first day of the current month through today's date.",
         "parameters": {
             "type": "object",
             "properties": {
