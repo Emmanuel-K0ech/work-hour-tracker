@@ -6,8 +6,10 @@ import {
   TextInput,
   Pressable,
   Platform,
+  Alert,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { router } from "expo-router";
 import { saveEntry } from "@/services/api";
 
 export default function AddEntryScreen() {
@@ -49,7 +51,17 @@ export default function AddEntryScreen() {
         hourly_rate: rate,
       });
 
-      alert("Entry saved successfully!");
+      if (Platform.OS === "web") {
+        alert("Entry saved successfully!");
+        router.replace("/");
+      } else {
+        Alert.alert("Success", "Entry saved successfully!", [
+          {
+            text: "OK",
+            onPress: () => router.replace("/"),
+          },
+        ]);
+      }
     } catch (error) {
       console.error("Save entry error:", error);
       alert("Failed to save entry.");
