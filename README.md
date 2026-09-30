@@ -523,19 +523,28 @@ The response includes total hours and total earnings for the selected period.
 
 ## Update an Entry
 
-The backend supports updating an existing work entry identified by its date.
+```http
+PUT /entries/{date}
+```
 
-The update operation accepts:
+Updates an existing work entry identified by its date.
+
+Example:
+
+```http
+PUT /entries/2026-09-02
+```
+
+Request body:
 
 ```json
 {
-  "date": "2026-09-02",
   "hours_worked": 10,
   "hourly_rate": 15
 }
 ```
 
-The exact HTTP route can also be inspected through FastAPI's automatically generated `/docs` interface.
+The date is provided in the URL, while the updated hours worked and hourly rate are provided in the request body.
 
 ---
 
