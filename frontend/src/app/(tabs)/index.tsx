@@ -1,7 +1,46 @@
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, View, Pressable } from "react-native";
 import { router } from "expo-router";
 
+import { getEntries } from "@/services/api";
+
 export default function HomeScreen() {
+  const [entries, setEntries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadEntries();
+  }, []);
+
+  const loadEntries = async () => {
+    try {
+      const response = await getEntries();
+      setEntries(response.data);
+    } catch (error) {
+      console.error("Home entries error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const todayEntries = entries.filter((entry) => entry.date === today);
+
+  const hoursToday = todayEntries.reduce(
+    (total, entry) => total + entry.hours_worked,
+    0,
+  );
+
+  const earningsToday = todayEntries.reduce(
+    (total, entry) => total + entry.hours_worked * entry.hourly_rate,
+    0,
+  );
+
+  const recentEntries = [...entries]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 2);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Work Hour Tracker</Text>
@@ -10,12 +49,14 @@ export default function HomeScreen() {
 
       <View style={styles.cardsContainer}>
         <View style={styles.card}>
-          <Text style={styles.cardValue}>8.5</Text>
+          <Text style={styles.cardValue}>{loading ? "..." : hoursToday}</Text>
           <Text style={styles.cardLabel}>Hours Today</Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardValue}>$68.00</Text>
+          <Text style={styles.cardValue}>
+            {loading ? "..." : `$${earningsToday.toFixed(2)}`}
+          </Text>
           <Text style={styles.cardLabel}>Earnings Today</Text>
         </View>
       </View>
@@ -29,23 +70,25 @@ export default function HomeScreen() {
 
       <Text style={styles.sectionTitle}>Recent Entries</Text>
 
-      <View style={styles.entry}>
-        <View>
-          <Text style={styles.entryDate}>July 04, 2026</Text>
-          <Text style={styles.entryDetails}>10 hours × $8/hour</Text>
+      {!loading && recentEntries.length === 0 && (
+        <Text>No work entries yet.</Text>
+      )}
+
+      {recentEntries.map((entry) => (
+        <View key={entry.id} style={styles.entry}>
+          <View>
+            <Text style={styles.entryDate}>{entry.date}</Text>
+
+            <Text style={styles.entryDetails}>
+              {entry.hours_worked} hours × ${entry.hourly_rate}/hour
+            </Text>
+          </View>
+
+          <Text style={styles.entryAmount}>
+            ${(entry.hours_worked * entry.hourly_rate).toFixed(2)}
+          </Text>
         </View>
-
-        <Text style={styles.entryAmount}>$80.00</Text>
-      </View>
-
-      <View style={styles.entry}>
-        <View>
-          <Text style={styles.entryDate}>June 24, 2026</Text>
-          <Text style={styles.entryDetails}>8.52 hours × $7/hour</Text>
-        </View>
-
-        <Text style={styles.entryAmount}>$59.64</Text>
-      </View>
+      ))}
     </View>
   );
 }
