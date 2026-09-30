@@ -4,7 +4,7 @@ A full-stack work-hours and earnings tracking application built with **React Nat
 
 Work Hour Tracker allows users to record working hours and hourly rates, review their work history, generate earnings summaries for a date range, and interact with an AI assistant that can work with their records through application tools.
 
-> **Project status:** Functional MVP / portfolio project — currently being refined for production-readiness and public release.
+> **Project status:** Functional MVP / portfolio project. Core functionality has been implemented and tested across web and Android, including work-entry management, summaries, database integration, and AI-assisted record management.
 
 ---
 
@@ -36,11 +36,14 @@ The application is designed as a practical demonstration of full-stack applicati
 - Store records in a SQLite database
 - Prevent duplicate entries for the same date under the current data model
 - Update an existing entry by date
+- Display confirmation after a successful save
+- Return the user to the Home screen after saving
 
 ### Work History
 
 - Retrieve all saved work entries
 - Display hours worked, hourly rate, and calculated earnings for each entry
+- Scroll through work history on mobile
 
 ### Earnings Summary
 
@@ -51,18 +54,29 @@ The application is designed as a practical demonstration of full-stack applicati
 - Validate that the start date is not after the end date
 - Display calculated values to two decimal places
 
+### Dynamic Home Dashboard
+
+The Home screen retrieves actual work records from the backend and displays:
+
+- Hours worked today
+- Earnings today
+- Most recent work entries
+
+The dashboard therefore reflects stored application data rather than static demonstration values.
+
 ### AI Assistant
 
 The application includes an AI assistant connected to the backend.
 
 The assistant can:
 
-- Answer general questions conversationally
-- Retrieve work records
+- Answer ordinary conversational messages
+- Retrieve all work records
 - Retrieve a specific record by date
 - Generate summaries for date ranges
 - Save work entries
 - Update existing work entries
+- Interpret relative dates such as "today," "yesterday," "this month," and "last month"
 
 The AI assistant uses function/tool calling to connect natural-language requests with application functionality.
 
@@ -74,7 +88,7 @@ or:
 
 > "Record 8 hours today at $15 per hour."
 
-The assistant can interpret the request and use the appropriate backend operation.
+The assistant interprets the request and uses the appropriate backend operation when work-record data is required.
 
 ---
 
@@ -103,12 +117,9 @@ flowchart TD
     AG --> T[Application Tools]
 
     T --> DB
-    T --> API
 ```
 
-### Request Flow
-
-A typical work-entry request follows this path:
+### Standard Request Flow
 
 ```text
 User
@@ -124,7 +135,7 @@ Service Layer
 SQLite Database
 ```
 
-For an AI request:
+### AI Request Flow
 
 ```text
 User
@@ -186,12 +197,12 @@ The frontend supports both native navigation and a web-specific tab interface.
 
 The current database contains a `work_entries` table with:
 
-| Column | Type | Description |
-|---|---|---|
-| `id` | INTEGER | Primary key |
-| `date` | TEXT | Date the work was performed |
-| `hours_worked` | REAL | Number of hours worked |
-| `hourly_rate` | REAL | Hourly pay rate |
+| Column         | Type    | Description                 |
+| -------------- | ------- | --------------------------- |
+| `id`           | INTEGER | Primary key                 |
+| `date`         | TEXT    | Date the work was performed |
+| `hours_worked` | REAL    | Number of hours worked      |
+| `hourly_rate`  | REAL    | Hourly pay rate             |
 
 ---
 
@@ -221,6 +232,8 @@ work-hour-tracker/
 │           └── test_tables.py
 │
 ├── frontend/
+│   ├── .env.example
+│   │
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── (tabs)/
@@ -245,6 +258,7 @@ work-hour-tracker/
 │
 ├── requirements.txt
 ├── .gitignore
+├── LICENSE
 └── README.md
 ```
 
@@ -274,7 +288,7 @@ cd work-hour-tracker
 
 ## 2. Backend Setup
 
-Create and activate a Python virtual environment:
+Create and activate a Python virtual environment.
 
 ### Linux / macOS
 
@@ -296,15 +310,11 @@ Install the backend dependencies:
 pip install -r requirements.txt
 ```
 
-The current backend also imports the OpenAI SDK and `python-dotenv`. If they are not included in the environment created from `requirements.txt`, install them with:
+The requirements include the OpenAI Python SDK and `python-dotenv`, which are required by the AI assistant and environment configuration.
 
-```bash
-pip install openai python-dotenv
-```
+### Configure the OpenAI API Key
 
-### Configure the OpenAI API key
-
-Create a local environment file at:
+Create:
 
 ```text
 backend/app/.env
@@ -318,24 +328,30 @@ OPENAI_API_KEY=your_api_key_here
 
 **Never commit this file or your actual API key to GitHub.**
 
-Start the FastAPI server from the project root:
+The project's `.gitignore` excludes `.env` files from version control.
 
-```bash
-uvicorn app.main:app --reload
-```
+### Start FastAPI
 
-If running the command from the `backend` directory instead:
+From the project root:
 
 ```bash
 cd backend
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-The API will normally be available at:
+The API will normally be available locally at:
 
 ```text
 http://localhost:8000
 ```
+
+FastAPI's interactive API documentation is available at:
+
+```text
+http://localhost:8000/docs
+```
+
+Using `--host 0.0.0.0` allows FastAPI to accept connections from other reachable devices during local development.
 
 ---
 
@@ -347,13 +363,45 @@ Open another terminal:
 cd frontend
 ```
 
-Install JavaScript dependencies:
+Install the JavaScript dependencies:
 
 ```bash
 npm install
 ```
 
-Start Expo:
+### Configure the Backend URL
+
+The frontend uses the `EXPO_PUBLIC_API_URL` environment variable to determine the FastAPI backend address.
+
+An example configuration is provided in:
+
+```text
+frontend/.env.example
+```
+
+Create your local environment configuration:
+
+```bash
+cp .env.example .env
+```
+
+The default configuration is:
+
+```env
+EXPO_PUBLIC_API_URL=http://localhost:8000
+```
+
+The frontend also falls back to:
+
+```text
+http://localhost:8000
+```
+
+when `EXPO_PUBLIC_API_URL` is not defined.
+
+The local `.env` file is excluded from Git and should not be committed.
+
+### Start Expo
 
 ```bash
 npx expo start
@@ -365,43 +413,55 @@ npx expo start
 npx expo start --web
 ```
 
-### Run on Android
+### Run with Expo Go
+
+If the development device has difficulty connecting directly to the Expo development server, Expo's tunnel mode can be used:
+
+```bash
+npx expo start --tunnel
+```
+
+Scan the displayed QR code with Expo Go.
+
+### Android Development Build / Emulator
 
 ```bash
 npx expo start --android
 ```
 
-### Run on iOS
+### iOS Development Build / Simulator
 
 ```bash
 npx expo start --ios
 ```
 
-The native commands require the appropriate Android/iOS development environment.
+The native commands require the appropriate Android or iOS development environment.
 
 ---
 
-## Important: Backend URL
+## Testing on a Physical Device
 
-The frontend currently uses:
+When the application runs on a physical phone, `localhost` refers to the phone itself rather than the computer running FastAPI.
 
-```text
-http://localhost:8000
+Set the frontend environment variable to an address through which the phone can reach the development computer:
+
+```env
+EXPO_PUBLIC_API_URL=http://YOUR_COMPUTER_IP:8000
 ```
 
-for backend requests.
+The phone and development computer must be able to communicate over the network.
 
-This works when the frontend and backend are running on the same machine.
+Depending on the development environment, additional network configuration may be required to make a backend running inside a virtualized environment such as WSL reachable from another device.
 
-For a physical phone or a deployed environment, `localhost` refers to the device itself rather than the computer running FastAPI. The API URL should therefore be changed to a reachable backend address before using the application outside the local development environment.
-
-A future improvement should move this URL into an environment-based configuration.
+The project does not commit machine-specific IP addresses.
 
 ---
 
 # API Documentation
 
-The backend exposes the following endpoints.
+FastAPI provides interactive API documentation at `/docs` while the backend is running.
+
+The application uses endpoints for the following operations.
 
 ## Create Work Entry
 
@@ -463,24 +523,19 @@ The response includes total hours and total earnings for the selected period.
 
 ## Update an Entry
 
-```http
-PUT /entries/{date}
-```
+The backend supports updating an existing work entry identified by its date.
 
-Example:
-
-```http
-PUT /entries/2026-09-02
-```
-
-Request body:
+The update operation accepts:
 
 ```json
 {
+  "date": "2026-09-02",
   "hours_worked": 10,
   "hourly_rate": 15
 }
 ```
+
+The exact HTTP route can also be inspected through FastAPI's automatically generated `/docs` interface.
 
 ---
 
@@ -504,19 +559,19 @@ The endpoint sends the request to the AI agent, which determines whether an appl
 
 # AI Assistant Architecture
 
-The AI assistant is implemented as a backend service rather than calling OpenAI directly from the frontend.
+The AI assistant is implemented on the backend rather than calling OpenAI directly from the frontend.
 
-This keeps the API key on the server and allows the application to control which operations the model can perform.
+This keeps the OpenAI API key on the server and allows the application to control which operations the model can perform.
 
 The currently available tools are:
 
-| Tool | Purpose |
-|---|---|
-| `save_entry` | Save a new work entry |
-| `get_entries` | Retrieve all work entries |
-| `get_entry` | Retrieve an entry by date |
-| `update_entry` | Update an existing entry |
-| `get_summary` | Calculate hours and earnings for a date range |
+| Tool           | Purpose                                       |
+| -------------- | --------------------------------------------- |
+| `save_entry`   | Save a new work entry                         |
+| `get_entries`  | Retrieve all work entries                     |
+| `get_entry`    | Retrieve an entry by date                     |
+| `update_entry` | Update an existing entry                      |
+| `get_summary`  | Calculate hours and earnings for a date range |
 
 ### Tool Calling Flow
 
@@ -538,7 +593,9 @@ The currently available tools are:
 8. Response is returned to the frontend
 ```
 
-This architecture demonstrates an important pattern for AI-enabled applications: the model handles language understanding while the application remains responsible for executing actual operations against its data.
+This architecture demonstrates an important pattern for AI-enabled applications: the model handles language understanding while the application remains responsible for executing operations against its data.
+
+The AI is instructed to use application tools for factual work-record questions rather than inventing database information.
 
 ---
 
@@ -548,20 +605,18 @@ The application currently uses SQLite for local persistence.
 
 The database is created automatically when the backend initializes the application.
 
-The current schema is:
+The work-entry data model contains:
 
-```sql
-CREATE TABLE IF NOT EXISTS work_entries (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date TEXT NOT NULL,
-    hours_worked REAL NOT NULL,
-    hourly_rate REAL NOT NULL
-);
+```text
+id
+date
+hours_worked
+hourly_rate
 ```
 
 ### Current Data Model Limitation
 
-The current service layer prevents more than one work entry from being saved for the same date.
+The current application prevents more than one work entry from being saved for the same date.
 
 This means the application currently models:
 
@@ -576,6 +631,8 @@ One date → Multiple work entries
 ```
 
 This would support scenarios such as multiple shifts in one day or different hourly rates during the same day.
+
+The local SQLite database (`*.db`) is excluded from version control.
 
 ---
 
@@ -595,7 +652,23 @@ The test files are located under:
 backend/app/tests/
 ```
 
-Current tests are primarily lightweight Python scripts and should be expanded into a formal automated test suite before production deployment.
+The application has also been manually tested across its primary user flows.
+
+### Tested Application Flows
+
+- Creating a work entry
+- Retrieving saved entries
+- Scrolling through work history on Android
+- Generating date-range summaries
+- Displaying real database values on the Home dashboard
+- Post-save confirmation and navigation
+- Mobile tab navigation
+- Retrieving records through the AI assistant
+- Generating summaries through the AI assistant
+- Updating records through the AI assistant
+- Running the application on a physical Android device with Expo Go
+
+Current automated tests are primarily lightweight Python scripts and should be expanded into a formal automated test suite before production deployment.
 
 A future testing setup should include:
 
@@ -612,7 +685,7 @@ A future testing setup should include:
 
 This project is currently designed for local development and portfolio demonstration.
 
-Before production deployment, the following should be addressed:
+Before production deployment, the following should be addressed.
 
 ### API Key Protection
 
@@ -624,30 +697,35 @@ Never commit:
 
 or an actual OpenAI API key.
 
-The API key should remain exclusively on the backend.
+The OpenAI API key remains exclusively on the backend.
+
+### Local Database Protection
+
+SQLite database files are excluded from version control using:
+
+```text
+*.db
+```
+
+This prevents local work records from being accidentally committed to the repository.
 
 ### CORS
 
-The current backend allows all origins during development:
+The backend currently uses broad CORS configuration for development.
 
-```python
-allow_origins=["*"]
-```
-
-Production deployment should restrict this to trusted frontend origins.
+Production deployment should restrict allowed origins to trusted frontend origins.
 
 ### Input Validation
 
-The application performs basic frontend validation. Backend validation should also enforce sensible constraints such as:
+The application performs client-side and backend request validation. Additional production validation could enforce stricter constraints such as:
 
-- Positive hours worked
-- Positive hourly rate
-- Valid date format
-- Reasonable numeric ranges
+- Reasonable maximum working hours
+- Reasonable hourly-rate ranges
+- Additional date constraints
 
 ### Database
 
-The SQLite database is appropriate for the current local MVP.
+SQLite is appropriate for the current local MVP.
 
 A production application should consider a managed relational database and proper user isolation if multiple users are supported.
 
@@ -655,22 +733,21 @@ A production application should consider a managed relational database and prope
 
 The current application does not implement user authentication or authorization.
 
-Before supporting multiple users, authentication and authorization should be added so that users can only access their own records.
+Before supporting multiple users, authentication and authorization should be added so users can access only their own records.
 
 ---
 
 # Known Limitations
 
-The current MVP has several areas that are intentionally left for future development:
+The current MVP has several areas intentionally left for future development:
 
 - No user authentication
-- SQLite is intended for local development
-- Frontend API URL is currently hardcoded
-- Home dashboard currently contains static demonstration values
+- SQLite is intended primarily for local development
 - One work entry per date is currently supported
 - No delete-entry functionality
+- Entries cannot currently be edited through a dedicated frontend edit form
 - Limited formal automated testing
-- AI tool-calling flow can be further hardened
+- AI tool-calling behavior can be further hardened
 - Production deployment configuration has not yet been implemented
 - CORS is configured broadly for development
 - No dedicated production error-monitoring system
@@ -692,7 +769,11 @@ The current MVP has several areas that are intentionally left for future develop
 
 ## Phase 2 — Application Improvements
 
-- [ ] Dynamic home dashboard
+- [x] Dynamic Home dashboard
+- [x] Environment-based frontend API configuration
+- [x] Mobile navigation
+- [x] Physical-device testing
+- [x] Post-save confirmation and navigation
 - [ ] Delete entries
 - [ ] Edit entries from the frontend
 - [ ] Support multiple entries per day
@@ -706,9 +787,8 @@ The current MVP has several areas that are intentionally left for future develop
 - [ ] User authentication
 - [ ] User-specific data isolation
 - [ ] Production database
-- [ ] Environment-based configuration
 - [ ] Restricted CORS
-- [ ] Automated testing
+- [ ] Formal automated testing
 - [ ] CI/CD pipeline
 - [ ] Production deployment
 - [ ] Monitoring and logging
@@ -721,14 +801,13 @@ The current MVP has several areas that are intentionally left for future develop
 - [ ] Custom pay periods
 - [ ] Export to CSV/PDF
 - [ ] AI-powered analytics
-- [ ] Natural-language editing of work records
 - [ ] Notifications and reminders
 
 ---
 
 # Screenshots
 
-Screenshots can be added here as the interface is finalized.
+Screenshots can be added as the interface is finalized.
 
 Recommended structure:
 
@@ -742,15 +821,13 @@ docs/
     └── assistant.png
 ```
 
-Then reference them from this README:
+They can then be displayed in this README using:
 
 ```markdown
 ![Home](docs/screenshots/home.png)
-
+![Add Entry](docs/screenshots/add-entry.png)
 ![Entries](docs/screenshots/entries.png)
-
 ![Summary](docs/screenshots/summary.png)
-
 ![AI Assistant](docs/screenshots/assistant.png)
 ```
 
@@ -800,6 +877,8 @@ This separation keeps database operations out of the route definitions and makes
 
 `backend/app/tools.py` defines the operations that the AI model is allowed to request.
 
+The current AI scope intentionally uses the application's existing work-entry operations rather than introducing a separate data-management system.
+
 ---
 
 # Contributing
@@ -820,6 +899,7 @@ To contribute:
 # License
 
 This project is licensed under the MIT License.
+
 See the [LICENSE](LICENSE) file for details.
 
 ---
@@ -846,5 +926,4 @@ Work Hour Tracker was built as a practical full-stack project to explore the int
 - Backend service architecture
 - Cross-platform development with Expo
 
-The project demonstrates how a conventional CRUD application can be extended with an AI interface that allows users to interact with application data using natural language.
- 
+The project demonstrates how a conventional work-tracking application can be extended with an AI interface that allows users to interact with application data using natural language while keeping actual data operations under application control.
