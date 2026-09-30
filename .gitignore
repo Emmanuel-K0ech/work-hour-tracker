@@ -9,3 +9,5 @@ venv/
 node_modules/
 mvp/
 notes.txt
+.env
+*.db
