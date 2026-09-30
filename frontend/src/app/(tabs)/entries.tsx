@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 
 import { getEntries } from "@/services/api";
 
@@ -41,7 +41,7 @@ export default function EntriesScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={styles.title}>My Entries</Text>
 
       {entries.map((entry) => (
@@ -59,7 +59,7 @@ export default function EntriesScreen() {
           </Text>
         </View>
       ))}
-    </View>
+    </ScrollView>
   );
 }
 
